@@ -1,4 +1,4 @@
-//https://contest.yandex.ru/contest/36361/run-report/66591049/
+//https://contest.yandex.ru/contest/36361/run-report/68016758/
 
 #include <iostream>
 #include <vector>
@@ -16,35 +16,38 @@ void sort(std::vector<Ribs>& data) {
     });
 }
 
-int get_dsu(int p, std::vector<int>& parent) {
-    if (p != parent[p])
-        parent[p] = get_dsu(parent[p], parent);
-    return parent[p];
+
+int find(const std::vector<int>& parent, int p) {
+    if (p == parent[p]) {
+        return p;
+    }
+    return find(parent, parent[p]);
 }
 
-void dsu(int p1, int p2, std::vector<int>& parent, std::vector<int>& size) {
-    p1 = get_dsu(p1, parent);
-    p2 = get_dsu(p2, parent);
-    if (size[p1] < size[p2]) {
+
+void union_set(std::vector<int>& parent, std::vector<int>& rank, int p1, int p2) {
+    p1 = find(parent, p1);
+    p2 = find(parent, p2);
+    if (rank[p1] > rank[p2]) {
         std::swap(p1, p2);
     }
-    parent[p2] = p1;
-    size[p1] += size[p2];
+    rank[p2] = std::max(rank[p2], rank[p1] + 1);
+    parent[p1] = parent[p2];
 }
+
 
 int kraskal(std::vector<Ribs> data, int count_node, int count_ribs) {
     int answer = 0;
-    std::vector<int> parent(count_node), size(count_node);
+    std::vector<int> parent(count_node), rank(count_ribs);
     for (int i = 0; i < count_node; i++) {
         parent[i] = i;
-        size[i] = i;
     }
     sort(data);
-    for (int i = 0; i < count_ribs; i++) {
+    for (int i = 0; i < count_ribs; ++i) {
         int p1 = data[i].point1, p2 = data[i].point2, w = data[i].weight;
-        if (get_dsu(p1, parent) != get_dsu(p2, parent)) {
+        if (find(parent, p1) != find(parent, p2)) {
+            union_set(parent, rank, p1, p2);
             answer += w;
-            dsu(p1, p2, parent, size);
         }
     }
     return answer;
